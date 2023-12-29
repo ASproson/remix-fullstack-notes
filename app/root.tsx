@@ -29,7 +29,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <h1>Hello world</h1>
+        <h1 className="p-8 text-xl">Hello world</h1>
         <Scripts />
         <LiveReload />
       </body>
