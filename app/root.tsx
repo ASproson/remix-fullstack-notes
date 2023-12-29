@@ -1,6 +1,7 @@
 import type { LinksFunction } from "@remix-run/node";
 import { Links, LiveReload, Scripts } from "@remix-run/react";
 import stylesheet from "~/tailwind.css";
+import faviconAssetUrl from "./assets/favicon.svg";
 
 /**
  * @returns `<link>` tags to be inserted into the `<head>` on route transitions
@@ -10,7 +11,7 @@ export const links: LinksFunction = () => [
   {
     rel: "icon",
     type: "image/svg+xml",
-    href: "/favicon.svg",
+    href: faviconAssetUrl,
   },
 ];
 
