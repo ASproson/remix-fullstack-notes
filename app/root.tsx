@@ -1,8 +1,10 @@
 import type { LinksFunction } from "@remix-run/node";
 import { Links, LiveReload, Scripts } from "@remix-run/react";
-
 import stylesheet from "~/tailwind.css";
 
+/**
+ * @returns `<link>` tags to be inserted into the `<head>` on route transitions
+ */
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
   {
@@ -11,6 +13,7 @@ export const links: LinksFunction = () => [
     href: "/favicon.svg",
   },
 ];
+
 export default function App() {
   return (
     <html lang="en">
