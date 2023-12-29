@@ -1,16 +1,17 @@
-# Welcome to Remix!
+# Fullstack Notes App
 
-- [Remix Docs](https://remix.run/docs)
+> [!NOTE]
+> This is a work in progress
 
-## Development
-
-From your terminal:
+## Running Locally
 
 ```sh
+git clone https://github.com/ASproson/remix-fullstack-notes.git
+npm i
 npm run dev
 ```
 
-This starts your app in development mode, rebuilding assets on file changes.
+This starts the app in development mode and rebuilds assets on file changes
 
 ## Deployment
 
