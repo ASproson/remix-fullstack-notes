@@ -1,14 +1,14 @@
 import type { LinksFunction } from "@remix-run/node";
 import { Links, LiveReload, Scripts } from "@remix-run/react";
-import stylesheet from "~/tailwind.css";
 import faviconAssetUrl from "./assets/favicon.svg";
 import fontStylesStyleSheetUrl from "./styles/font.css";
+import tailwindStyleSheet from "./styles/tailwind.css";
 
 /**
  * @returns `<link>` tags to be inserted into the `<head>` on route transitions
  */
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet },
+  { rel: "stylesheet", href: tailwindStyleSheet },
   {
     rel: "icon",
     type: "image/svg+xml",
