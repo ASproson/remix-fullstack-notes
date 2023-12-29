@@ -1,6 +1,6 @@
 ## Purpose of the `links` function
 
-By using [`<Links />`](root.tsx) from Remix we gain the ability to insert links, modules, and lots of other things into our `<head>` tag. Currently we insert our Tailwind stylesheet and our custom SVG file
+By using [`<Links />`](root.tsx) from Remix we gain the ability to insert links, modules, and lots of other things into our `<head>` tag. Currently we insert our Tailwind stylesheet, our fonts, and our custom SVG file
 
 ## Why we store the favicon in `app/assets`
 
@@ -15,12 +15,13 @@ But what if we update or change the favicon? By default it gets stored for one h
 
 ```TypeScript
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet },
+  ...,
   {
     rel: "icon",
     type: "image/svg+xml",
     href: faviconAssetUrl,
   },
+  ...
 ];
 ```
 
