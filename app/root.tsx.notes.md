@@ -11,7 +11,7 @@ Originally the favicon was stored in [`/public`](../public/), which worked great
 3. `favicon.svg` >
 4. `Status Code: 🟢 200 OK (from disk cache)`
 
-But what if we update or change the favicon? By default it gets stored for one hour, but we want our new favicon immediately. To do this we moved our favicon out of `/public` into [`/app/assets/favicon.svg`](/app/assets/favicon.svg). We then imported the favicon into `root.tsx` and called it as part of our `links` function:
+But what if we update or change the favicon? By default it gets stored for one hour, but we want our new favicon immediately. To do this we moved our favicon out of `/public` into [`/app/assets`](/app/assets). We then imported the favicon into `root.tsx` and called it as part of our `links` function:
 
 ```TypeScript
 export const links: LinksFunction = () => [
@@ -26,4 +26,4 @@ export const links: LinksFunction = () => [
 
 Now, whenever we update the favicon it will be updated immediately due to Remix's 'fingerprinting', by importing the module Remix can detect if and when the import's values change. If a change is detected (the fingerprints don't match), Remix will load our updated asset
 
-When we come to build our app for production Remix will _automatically_ create a public version of this favicon and store it in `public/build`
+When we come to build our app for production Remix will _automatically_ create a public version of this favicon and store it in [`public`](../public/)
