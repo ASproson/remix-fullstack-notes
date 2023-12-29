@@ -37,3 +37,21 @@ Make sure to deploy the output of `remix build`
 
 - `build/`
 - `public/build/`
+
+### Packages used
+
+- Tailwind
+- Autoprefixer
+- PostCSS
+
+#### Tailwind
+
+[Tailwind](https://tailwindcss.com/) is a package that enables the developer to add compact styling right into the `JSX` for the specific element that is being styled. Additionally, Tailwind will purge any unused CSS and rarely ships with a package larger than 15kb
+
+#### Autoprefixer
+
+[Autoprefixer](https://www.npmjs.com/package/autoprefixer) automatically adds vendor prefixes to our CSS rules so that our styling works across different browsers without any issue (especially older browser versions)
+
+#### PostCSS
+
+[PostCSS](https://postcss.org/) works hand-in-hand with Autoprefixer and allows us to write more maintainable and modular styles
