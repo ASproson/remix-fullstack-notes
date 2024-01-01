@@ -36,7 +36,6 @@ export const loader = async () => {
 
 export default function App() {
   const { notes } = useLoaderData<typeof loader>();
-  console.log(notes);
   return (
     <html lang="en" className="h-full overflow-x-hidden">
       <head>
