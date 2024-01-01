@@ -1,9 +1,17 @@
 import type { LinksFunction } from "@remix-run/node";
-import { Links, LiveReload, Scripts } from "@remix-run/react";
+import {
+  Link,
+  Links,
+  LiveReload,
+  Outlet,
+  Scripts,
+  json,
+  useLoaderData,
+} from "@remix-run/react";
 import faviconAssetUrl from "./assets/favicon.svg";
 import fontStylesStyleSheetUrl from "./styles/font.css";
 import tailwindStyleSheet from "./styles/tailwind.css";
-import { Index } from "./routes";
+import { getNotes } from "./utils/data";
 
 /**
  * @returns `<link>` tags to be inserted into the `<head>` on route transitions
@@ -21,7 +29,14 @@ export const links: LinksFunction = () => [
   },
 ];
 
+export const loader = async () => {
+  const notes = await getNotes();
+  return json({ notes });
+};
+
 export default function App() {
+  const { notes } = useLoaderData<typeof loader>();
+  console.log(notes);
   return (
     <html lang="en" className="h-full overflow-x-hidden">
       <head>
@@ -37,7 +52,14 @@ export default function App() {
         </header>
 
         <div className="flex-1">
-          <Index />
+          <ul>
+            {notes.map((note) => (
+              <li key={note.id}>
+                <Link to={`notes/${note.id}`}>Note {note.id}</Link>
+              </li>
+            ))}
+          </ul>
+          <Outlet />
         </div>
 
         <footer className="container mx-auto flex justify-between">
@@ -53,9 +75,9 @@ export default function App() {
 
 const NavFooter = () => {
   return (
-    <div>
+    <Link to={`/`}>
       <div className="font-light">fullstack</div>
       <div className="font-bold">notes</div>
-    </div>
+    </Link>
   );
 };
