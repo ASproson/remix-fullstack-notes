@@ -7,9 +7,6 @@ export default function Index() {
 			<Link to={`/users/kody`}>
 				<h2>Demo user</h2>
 			</Link>
-			<Link to={`/users/kody/notes`}>
-				<h2>Notes</h2>
-			</Link>
 		</div>
 	)
 }
