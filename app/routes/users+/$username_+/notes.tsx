@@ -25,7 +25,7 @@ export const loader = ({ params }: DataFunctionArgs) => {
 	return json({ owner, notes })
 }
 
-export const NotesRoute = () => {
+export default function NotesRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	// @ts-expect-error

@@ -16,7 +16,7 @@ export const loader = async ({ params }: DataFunctionArgs) => {
 	})
 }
 
-export const ProfileRoute = () => {
+export default function ProfileRoute() {
 	const data = useLoaderData<typeof loader>()
 	return (
 		<div className="container mb-48 mt-36">

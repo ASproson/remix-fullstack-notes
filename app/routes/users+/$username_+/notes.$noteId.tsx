@@ -17,7 +17,7 @@ export const loader = async ({ params }: DataFunctionArgs) => {
 	})
 }
 
-export const NoteRoute = () => {
+export default function NoteRoute() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
