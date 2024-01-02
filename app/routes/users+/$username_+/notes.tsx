@@ -1,7 +1,7 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { Link, NavLink, Outlet, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
-import { cn } from '#app/utils/misc.tsx'
+import { cn, invariantResponse } from '#app/utils/misc.tsx'
 
 export const loader = ({ params }: DataFunctionArgs) => {
 	const owner = db.user.findFirst({
@@ -11,6 +11,11 @@ export const loader = ({ params }: DataFunctionArgs) => {
 			},
 		},
 	})
+
+	invariantResponse(owner, 'Owner does not exist in the database', {
+		status: 404,
+	})
+
 	const notes = db.note
 		.findMany({
 			where: {
@@ -28,7 +33,6 @@ export const loader = ({ params }: DataFunctionArgs) => {
 export default function NotesRoute() {
 	const data = useLoaderData<typeof loader>()
 
-	// @ts-expect-error
 	const ownerDisplayName = data.owner.name ?? data.owner.username
 	const navLinkDefaultClassName =
 		'line-clamp-2 block rounded-l-full py-2 pl-8 pr-6 text-base lg:text-xl'
@@ -38,7 +42,6 @@ export default function NotesRoute() {
 				<div className="relative col-span-1">
 					<div className="absolute inset-0 flex flex-col">
 						<Link
-							// @ts-expect-error
 							to={`/users/${data.owner.username}`}
 							className="pb-4 pl-8 pr-4 pt-12"
 						>

@@ -1,6 +1,7 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
+import { invariantResponse } from '#app/utils/misc.tsx'
 
 export const loader = async ({ params }: DataFunctionArgs) => {
 	const user = db.user.findFirst({
@@ -10,8 +11,10 @@ export const loader = async ({ params }: DataFunctionArgs) => {
 			},
 		},
 	})
+
+	invariantResponse(user, 'User not found', { status: 404 })
+
 	return json({
-		// @ts-expect-error
 		user: { name: user.name, username: user.username },
 	})
 }
