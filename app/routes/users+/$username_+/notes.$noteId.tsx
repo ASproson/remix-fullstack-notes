@@ -2,7 +2,7 @@ import { json, type DataFunctionArgs } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 
-export async function loader({ params }: DataFunctionArgs) {
+export const loader = async ({ params }: DataFunctionArgs) => {
 	const note = db.note.findFirst({
 		where: {
 			id: {
@@ -17,7 +17,7 @@ export async function loader({ params }: DataFunctionArgs) {
 	})
 }
 
-export default function NoteRoute() {
+export const NoteRoute = () => {
 	const data = useLoaderData<typeof loader>()
 
 	return (

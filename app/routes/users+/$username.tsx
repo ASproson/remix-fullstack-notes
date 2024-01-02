@@ -2,7 +2,7 @@ import { json, type DataFunctionArgs } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 
-export async function loader({ params }: DataFunctionArgs) {
+export const loader = async ({ params }: DataFunctionArgs) => {
 	const user = db.user.findFirst({
 		where: {
 			username: {
@@ -16,7 +16,7 @@ export async function loader({ params }: DataFunctionArgs) {
 	})
 }
 
-export default function ProfileRoute() {
+export const ProfileRoute = () => {
 	const data = useLoaderData<typeof loader>()
 	return (
 		<div className="container mb-48 mt-36">

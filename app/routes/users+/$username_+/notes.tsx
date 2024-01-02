@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { cn } from '#app/utils/misc.tsx'
 
-export async function loader({ params }: DataFunctionArgs) {
+export const loader = ({ params }: DataFunctionArgs) => {
 	const owner = db.user.findFirst({
 		where: {
 			username: {
@@ -25,7 +25,7 @@ export async function loader({ params }: DataFunctionArgs) {
 	return json({ owner, notes })
 }
 
-export default function NotesRoute() {
+export const NotesRoute = () => {
 	const data = useLoaderData<typeof loader>()
 
 	// @ts-expect-error
