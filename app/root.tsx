@@ -22,7 +22,7 @@ export default function App() {
 				<header className="container mx-auto py-6">
 					<nav className="flex justify-between">
 						<Link to="/">
-							<div className="font-light">epic</div>
+							<div className="font-light">fullstack</div>
 							<div className="font-bold">notes</div>
 						</Link>
 					</nav>
@@ -34,7 +34,7 @@ export default function App() {
 
 				<div className="container mx-auto flex justify-between">
 					<Link to="/">
-						<div className="font-light">epic</div>
+						<div className="font-light">fullstack</div>
 						<div className="font-bold">notes</div>
 					</Link>
 				</div>
