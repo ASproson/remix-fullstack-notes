@@ -1,7 +1,9 @@
 import { json, type DataFunctionArgs } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
+import { Link, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
+import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
+import { Button } from '#app/components/ui/button.tsx'
 
 export const loader = async ({ params }: DataFunctionArgs) => {
 	const note = db.note.findFirst({
@@ -29,6 +31,12 @@ export default function NoteRoute() {
 				<p className="whitespace-break-spaces text-sm md:text-lg">
 					{data.note.content}
 				</p>
+			</div>
+			<div className={floatingToolbarClassName}>
+				<Button variant="destructive">Delete</Button>
+				<Button asChild>
+					<Link to="edit">Edit</Link>
+				</Button>
 			</div>
 		</div>
 	)
