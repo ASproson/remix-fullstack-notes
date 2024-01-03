@@ -22,12 +22,22 @@ export const loader = async ({ params }: DataFunctionArgs) => {
 	})
 }
 
-export async function action({ params }: DataFunctionArgs) {
+export async function action({ params, request }: DataFunctionArgs) {
 	const noteId = params.noteId
-	db.note.delete({
-		where: { id: { equals: noteId } },
-	})
-	return redirect(`/users/${params.username}/notes`)
+	const formData = await request.formData()
+	const intent = formData.get('intent')
+
+	switch (intent) {
+		case 'delete': {
+			db.note.delete({
+				where: { id: { equals: noteId } },
+			})
+			return redirect(`/users/${params.username}/notes`)
+		}
+		default: {
+			throw new Response(`Invalid intent: ${intent}`, { status: 400 })
+		}
+	}
 }
 
 export default function NoteRoute() {
@@ -43,7 +53,12 @@ export default function NoteRoute() {
 			</div>
 			<div className={floatingToolbarClassName}>
 				<Form method="POST">
-					<Button variant="destructive" type="submit">
+					<Button
+						type="submit"
+						variant="destructive"
+						name="intent"
+						value="delete"
+					>
 						Delete
 					</Button>
 				</Form>
