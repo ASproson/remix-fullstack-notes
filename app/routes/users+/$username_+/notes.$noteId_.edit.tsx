@@ -1,4 +1,4 @@
-import { json, type DataFunctionArgs } from '@remix-run/node'
+import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
 import { Form, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
@@ -24,18 +24,50 @@ export async function loader({ params }: DataFunctionArgs) {
 	})
 }
 
+export async function action({ request, params }: DataFunctionArgs) {
+	const formData = await request.formData()
+	const title = formData.get('title')
+	const content = formData.get('content')
+
+	invariantResponse(typeof title === 'string', 'Title must be a valid string', {
+		status: 400,
+	})
+	invariantResponse(
+		typeof content === 'string',
+		'Content must be a valid string',
+		{ status: 400 },
+	)
+
+	db.note.update({
+		where: { id: { equals: params.noteId } },
+		data: { title, content },
+	})
+
+	return redirect(`/users/${params.username}/notes/${params.noteId}`)
+}
+
 export default function NoteEdit() {
 	const data = useLoaderData<typeof loader>()
 
 	return (
-		<Form method="POST">
-			<Label htmlFor="title">Title</Label>
-			<Input name="title" defaultValue={data.note.title} />
-			<Label htmlFor="content">Content</Label>
-			<Textarea name="content" defaultValue={data.note.content} />
-
+		<Form
+			method="POST"
+			className="flex h-full flex-col gap-y-4 overflow-x-hidden px-10 pb-28 pt-12"
+		>
+			<div className="flex flex-col gap-1">
+				<div>
+					<Label>Title</Label>
+					<Input name="title" defaultValue={data.note.title} />
+				</div>
+				<div>
+					<Label>Content</Label>
+					<Textarea name="content" defaultValue={data.note.content} />
+				</div>
+			</div>
 			<div className={floatingToolbarClassName}>
-				<Button type="reset">Reset</Button>
+				<Button variant="destructive" type="reset">
+					Reset
+				</Button>
 				<Button type="submit">Submit</Button>
 			</div>
 		</Form>
