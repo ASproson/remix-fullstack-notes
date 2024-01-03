@@ -30,9 +30,9 @@ export default function NoteEdit() {
 	return (
 		<Form method="POST">
 			<Label htmlFor="title">Title</Label>
-			<Input name="title" defaultValue={data.note.title}></Input>
+			<Input name="title" defaultValue={data.note.title} />
 			<Label htmlFor="content">Content</Label>
-			<Textarea name="content" defaultValue={data.note.content}></Textarea>
+			<Textarea name="content" defaultValue={data.note.content} />
 
 			<div className={floatingToolbarClassName}>
 				<Button type="reset">Reset</Button>
