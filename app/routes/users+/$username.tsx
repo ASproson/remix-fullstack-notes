@@ -3,6 +3,7 @@ import { Link, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
 import { type MetaFunction } from '@remix-run/react'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 
 export const loader = async ({ params }: DataFunctionArgs) => {
 	const user = db.user.findFirst({
@@ -42,4 +43,16 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
 			content: `Check out ${displayName} on Fullstack Notes`,
 		},
 	]
+}
+
+export const ErrorBoundary = () => {
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				404: ({ params }) => (
+					<p>No user with username {params.username} exists!</p>
+				),
+			}}
+		/>
+	)
 }

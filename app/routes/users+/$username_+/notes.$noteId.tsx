@@ -5,6 +5,7 @@ import { invariantResponse } from '#app/utils/misc.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { type loader as notesLoader } from './notes.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 
 export const loader = async ({ params }: DataFunctionArgs) => {
 	console.log(params)
@@ -91,4 +92,16 @@ export const meta: MetaFunction<
 			content: noteContentsSummary,
 		},
 	]
+}
+
+export const ErrorBoundary = () => {
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				404: ({ params }) => (
+					<p>Note with note ID {params.noteId} not found!</p>
+				),
+			}}
+		/>
+	)
 }

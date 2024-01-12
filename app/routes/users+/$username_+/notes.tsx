@@ -2,6 +2,7 @@ import { json, type DataFunctionArgs } from '@remix-run/node'
 import { Link, NavLink, Outlet, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { cn, invariantResponse } from '#app/utils/misc.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 
 export const loader = ({ params }: DataFunctionArgs) => {
 	const owner = db.user.findFirst({
@@ -72,5 +73,17 @@ export default function NotesRoute() {
 				</div>
 			</div>
 		</main>
+	)
+}
+
+export const ErrorBoundary = () => {
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				404: ({ params }) => (
+					<p>No user with username {params.username} exists!</p>
+				),
+			}}
+		/>
 	)
 }

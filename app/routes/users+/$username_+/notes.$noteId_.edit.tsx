@@ -12,6 +12,7 @@ import { Input } from '#app/components/ui/input.tsx'
 import { Textarea } from '#app/components/ui/textarea.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
@@ -82,5 +83,17 @@ export default function NoteEdit() {
 				</Button>
 			</div>
 		</Form>
+	)
+}
+
+export const ErrorBoundary = () => {
+	return (
+		<GeneralErrorBoundary
+			statusHandlers={{
+				404: ({ params }) => (
+					<p>Note with note ID {params.noteId} not found!</p>
+				),
+			}}
+		/>
 	)
 }
