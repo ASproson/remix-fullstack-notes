@@ -1,5 +1,10 @@
 import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
-import { Form, useLoaderData } from '@remix-run/react'
+import {
+	Form,
+	useFormAction,
+	useLoaderData,
+	useNavigation,
+} from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
 import { Label } from '#app/components/ui/label.tsx'
@@ -48,6 +53,10 @@ export async function action({ request, params }: DataFunctionArgs) {
 
 export default function NoteEdit() {
 	const data = useLoaderData<typeof loader>()
+	const { formMethod } = useNavigation()
+	const formAction = useFormAction()
+
+	const isPending = formAction === formAction && formMethod === 'POST'
 
 	return (
 		<Form
@@ -68,7 +77,9 @@ export default function NoteEdit() {
 				<Button variant="destructive" type="reset">
 					Reset
 				</Button>
-				<Button type="submit">Submit</Button>
+				<Button type="submit" disabled={isPending}>
+					{isPending ? 'Pending' : 'Submit'}
+				</Button>
 			</div>
 		</Form>
 	)
