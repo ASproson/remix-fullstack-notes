@@ -2,6 +2,7 @@ import { json, type DataFunctionArgs } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { db } from '#app/utils/db.server.ts'
 import { invariantResponse } from '#app/utils/misc.tsx'
+import { type MetaFunction } from '@remix-run/react'
 
 export const loader = async ({ params }: DataFunctionArgs) => {
 	const user = db.user.findFirst({
@@ -29,4 +30,16 @@ export default function ProfileRoute() {
 			</Link>
 		</div>
 	)
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
+	// Fall back to params if data loader fails
+	const displayName = data?.user.name ?? params.username
+	return [
+		{ title: `${displayName} | Fullstack Notes` },
+		{
+			name: 'Description',
+			content: `Check out ${displayName} on Fullstack Notes`,
+		},
+	]
 }

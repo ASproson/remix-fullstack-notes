@@ -3,6 +3,8 @@ import {
 	Link,
 	Links,
 	LiveReload,
+	Meta,
+	MetaFunction,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
@@ -30,6 +32,9 @@ export default function App() {
 	return (
 		<html lang="en" className="h-full overflow-x-hidden">
 			<head>
+				<Meta />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<meta charSet="utf-8" />
 				<Links />
 			</head>
 			<body className="flex h-full flex-col justify-between bg-background text-foreground">
@@ -65,4 +70,11 @@ export default function App() {
 			</body>
 		</html>
 	)
+}
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: 'Remix Fullstack Notes' },
+		{ name: 'description', content: `ASproson's portfolio page` },
+	]
 }
