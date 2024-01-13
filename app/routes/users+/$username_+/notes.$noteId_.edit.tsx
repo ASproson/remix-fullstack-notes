@@ -1,6 +1,7 @@
 import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
 import {
 	Form,
+	useActionData,
 	useFormAction,
 	useLoaderData,
 	useNavigation,
@@ -13,6 +14,15 @@ import { Textarea } from '#app/components/ui/textarea.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { useEffect, useState } from 'react'
+
+type ActionErrors = {
+	formErrors: Array<string>
+	fieldErrors: {
+		title: Array<string>
+		content: Array<string>
+	}
+}
 
 export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
@@ -30,19 +40,60 @@ export async function loader({ params }: DataFunctionArgs) {
 	})
 }
 
+const titleMaxLength = 100
+const contentMaxLength = 10000
+
 export async function action({ request, params }: DataFunctionArgs) {
+	invariantResponse(params.noteId, 'noteId param is required')
+
 	const formData = await request.formData()
 	const title = formData.get('title')
 	const content = formData.get('content')
 
-	invariantResponse(typeof title === 'string', 'Title must be a valid string', {
-		status: 400,
-	})
-	invariantResponse(
-		typeof content === 'string',
-		'Content must be a valid string',
-		{ status: 400 },
-	)
+	invariantResponse(typeof title === 'string', 'title must be a string')
+	invariantResponse(typeof content === 'string', 'content must be a string')
+
+	const errors: ActionErrors = {
+		formErrors: [],
+		fieldErrors: {
+			title: [],
+			content: [],
+		},
+	}
+
+	if (title === '') {
+		errors.fieldErrors.title.push('Title is required')
+	}
+
+	if (content === '') {
+		errors.fieldErrors.content.push('Content is required')
+	}
+
+	if (title.length > titleMaxLength) {
+		errors.fieldErrors.title.push(
+			`Title must be ${titleMaxLength} characters or less`,
+		)
+	}
+
+	if (content.length > contentMaxLength) {
+		errors.fieldErrors.content.push(
+			`Content must be ${contentMaxLength} characters or less`,
+		)
+	}
+
+	const hasErrors =
+		errors.formErrors.length ||
+		Object.values(errors.fieldErrors).some(fieldErrors => fieldErrors.length)
+
+	if (hasErrors) {
+		return json(
+			{
+				status: 'error',
+				errors,
+			} as const,
+			{ status: 400 },
+		)
+	}
 
 	db.note.update({
 		where: { id: { equals: params.noteId } },
@@ -52,26 +103,74 @@ export async function action({ request, params }: DataFunctionArgs) {
 	return redirect(`/users/${params.username}/notes/${params.noteId}`)
 }
 
+function ErrorList({ errors }: { errors?: Array<string> | null }) {
+	return errors?.length ? (
+		<ul className="flex flex-col gap-1">
+			{errors.map((error, i) => (
+				<li key={i} className="text-[10px] text-foreground-destructive">
+					{error}
+				</li>
+			))}
+		</ul>
+	) : null
+}
+
+/**
+ * @returns a boolean. On render server returns false because useEffect doesn't run. When JS loads this triggers the re-render and hydrates the page
+ */
+function useHydrated() {
+	const [hydrated, setHydrated] = useState(false)
+	useEffect(() => setHydrated(true), [])
+	return hydrated
+}
+
 export default function NoteEdit() {
 	const data = useLoaderData<typeof loader>()
 	const { formMethod } = useNavigation()
 	const formAction = useFormAction()
+	const actionData = useActionData<typeof action>()
+	const formId = 'note-editor'
+
+	const formErrors =
+		actionData?.status === 'error' ? actionData.errors.formErrors : null
+	const fieldErrors =
+		actionData?.status === 'error' ? actionData.errors.fieldErrors : null
 
 	const isPending = formAction === formAction && formMethod === 'POST'
 
+	const isHydrated = useHydrated()
+
 	return (
 		<Form
+			id={formId}
 			method="POST"
 			className="flex h-full flex-col gap-y-4 overflow-x-hidden px-10 pb-28 pt-12"
+			noValidate={isHydrated}
 		>
 			<div className="flex flex-col gap-1">
 				<div>
 					<Label>Title</Label>
-					<Input name="title" defaultValue={data.note.title} />
+					<Input
+						name="title"
+						defaultValue={data.note.title}
+						maxLength={titleMaxLength}
+						required
+					/>
+					<div className="min-h-[32px] px-4 pb-3 pt-1">
+						<ErrorList errors={fieldErrors?.title} />
+					</div>
 				</div>
 				<div>
 					<Label>Content</Label>
-					<Textarea name="content" defaultValue={data.note.content} />
+					<Textarea
+						name="content"
+						defaultValue={data.note.content}
+						maxLength={contentMaxLength}
+						required
+					/>
+					<div className="min-h-[32px] px-4 pb-3 pt-1">
+						<ErrorList errors={fieldErrors?.content} />
+					</div>
 				</div>
 			</div>
 			<div className={floatingToolbarClassName}>
@@ -82,6 +181,7 @@ export default function NoteEdit() {
 					{isPending ? 'Pending' : 'Submit'}
 				</Button>
 			</div>
+			<ErrorList errors={formErrors} />
 		</Form>
 	)
 }
