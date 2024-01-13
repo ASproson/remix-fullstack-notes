@@ -17,6 +17,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useFocusInvalid } from '#app/hooks/useFocusInvalid.tsx'
 import { z } from 'zod'
+import { parse } from '@conform-to/zod'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
@@ -45,18 +46,15 @@ const NoteEditorSchema = z.object({
 export async function action({ request, params }: DataFunctionArgs) {
 	invariantResponse(params.noteId, 'noteId param is required')
 	const formData = await request.formData()
-	const result = NoteEditorSchema.safeParse({
-		title: formData.get('title'),
-		content: formData.get('content'),
-	})
 
-	if (!result.success) {
-		console.log(result.error)
-		const errors = result.error.flatten()
-		return json({ status: 'error', errors } as const, { status: 400 })
+	const submission = parse(formData, { schema: NoteEditorSchema })
+
+	if (!submission.value) {
+		// Send the payload back to the user
+		return json({ status: 'error', submission } as const, { status: 400 })
 	}
 
-	const { title, content } = result.data
+	const { title, content } = submission.value
 
 	db.note.update({
 		where: { id: { equals: params.noteId } },
@@ -105,10 +103,11 @@ export default function NoteEdit() {
 
 	const inputId = `title-${useId()}`
 
-	const formErrors =
-		actionData?.status === 'error' ? actionData.errors.formErrors : null
 	const fieldErrors =
-		actionData?.status === 'error' ? actionData.errors.fieldErrors : null
+		actionData?.status === 'error' ? actionData.submission.error : null
+
+	const formErrors =
+		actionData?.status === 'error' ? actionData.submission.error[''] : null
 
 	const isHydrated = useHydrated()
 
