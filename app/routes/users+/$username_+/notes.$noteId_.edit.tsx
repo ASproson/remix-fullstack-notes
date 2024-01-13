@@ -16,14 +16,7 @@ import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useFocusInvalid } from '#app/hooks/useFocusInvalid.tsx'
-
-type ActionErrors = {
-	formErrors: Array<string>
-	fieldErrors: {
-		title: Array<string>
-		content: Array<string>
-	}
-}
+import { z } from 'zod'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
@@ -44,57 +37,26 @@ export async function loader({ params }: DataFunctionArgs) {
 const titleMaxLength = 100
 const contentMaxLength = 10000
 
+const NoteEditorSchema = z.object({
+	title: z.string().max(titleMaxLength).min(1),
+	content: z.string().max(contentMaxLength).min(1),
+})
+
 export async function action({ request, params }: DataFunctionArgs) {
 	invariantResponse(params.noteId, 'noteId param is required')
-
 	const formData = await request.formData()
-	const title = formData.get('title')
-	const content = formData.get('content')
+	const result = NoteEditorSchema.safeParse({
+		title: formData.get('title'),
+		content: formData.get('content'),
+	})
 
-	invariantResponse(typeof title === 'string', 'title must be a string')
-	invariantResponse(typeof content === 'string', 'content must be a string')
-
-	const errors: ActionErrors = {
-		formErrors: [],
-		fieldErrors: {
-			title: [],
-			content: [],
-		},
+	if (!result.success) {
+		console.log(result.error)
+		const errors = result.error.flatten()
+		return json({ status: 'error', errors } as const, { status: 400 })
 	}
 
-	if (title === '') {
-		errors.fieldErrors.title.push('Title is required')
-	}
-
-	if (content === '') {
-		errors.fieldErrors.content.push('Content is required')
-	}
-
-	if (title.length > titleMaxLength) {
-		errors.fieldErrors.title.push(
-			`Title must be ${titleMaxLength} characters or less`,
-		)
-	}
-
-	if (content.length > contentMaxLength) {
-		errors.fieldErrors.content.push(
-			`Content must be ${contentMaxLength} characters or less`,
-		)
-	}
-
-	const hasErrors =
-		errors.formErrors.length ||
-		Object.values(errors.fieldErrors).some(fieldErrors => fieldErrors.length)
-
-	if (hasErrors) {
-		return json(
-			{
-				status: 'error',
-				errors,
-			} as const,
-			{ status: 400 },
-		)
-	}
+	const { title, content } = result.data
 
 	db.note.update({
 		where: { id: { equals: params.noteId } },
@@ -137,6 +99,7 @@ export default function NoteEdit() {
 	const formAction = useFormAction()
 	const actionData = useActionData<typeof action>()
 	const formId = 'note-editor'
+	const isPending = formAction === formAction && formMethod === 'POST'
 
 	const formRef = useRef<HTMLFormElement>(null)
 
@@ -147,15 +110,13 @@ export default function NoteEdit() {
 	const fieldErrors =
 		actionData?.status === 'error' ? actionData.errors.fieldErrors : null
 
-	const isPending = formAction === formAction && formMethod === 'POST'
-
 	const isHydrated = useHydrated()
 
 	const formHasErrors = Boolean(formErrors?.length)
 	const formErrorId = formHasErrors ? 'form-error' : undefined
-	const titleHasErrors = Boolean(fieldErrors?.title.length)
+	const titleHasErrors = Boolean(fieldErrors?.title?.length)
 	const titleErrorId = titleHasErrors ? 'title-error' : undefined
-	const contentHasErrors = Boolean(fieldErrors?.content.length)
+	const contentHasErrors = Boolean(fieldErrors?.content?.length)
 	const contentErrorId = contentHasErrors ? 'content-error' : undefined
 
 	useFocusInvalid(formRef.current, actionData?.status === 'error')
