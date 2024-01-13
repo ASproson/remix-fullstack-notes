@@ -14,7 +14,7 @@ import { Textarea } from '#app/components/ui/textarea.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 type ActionErrors = {
 	formErrors: Array<string>
@@ -103,9 +103,15 @@ export async function action({ request, params }: DataFunctionArgs) {
 	return redirect(`/users/${params.username}/notes/${params.noteId}`)
 }
 
-function ErrorList({ errors }: { errors?: Array<string> | null }) {
+function ErrorList({
+	id,
+	errors,
+}: {
+	id?: string
+	errors?: Array<string> | null
+}) {
 	return errors?.length ? (
-		<ul className="flex flex-col gap-1">
+		<ul id={id} className="flex flex-col gap-1">
 			{errors.map((error, i) => (
 				<li key={i} className="text-[10px] text-foreground-destructive">
 					{error}
@@ -131,6 +137,10 @@ export default function NoteEdit() {
 	const actionData = useActionData<typeof action>()
 	const formId = 'note-editor'
 
+	const formRef = useRef<HTMLFormElement>(null)
+
+	const inputId = `title-${useId()}`
+
 	const formErrors =
 		actionData?.status === 'error' ? actionData.errors.formErrors : null
 	const fieldErrors =
@@ -140,49 +150,85 @@ export default function NoteEdit() {
 
 	const isHydrated = useHydrated()
 
+	const formHasErrors = Boolean(formErrors?.length)
+	const formErrorId = formHasErrors ? 'form-error' : undefined
+	const titleHasErrors = Boolean(fieldErrors?.title.length)
+	const titleErrorId = titleHasErrors ? 'title-error' : undefined
+	const contentHasErrors = Boolean(fieldErrors?.content.length)
+	const contentErrorId = contentHasErrors ? 'content-error' : undefined
+
+	useEffect(() => {
+		const formElement = formRef.current
+		if (!formElement) return
+		if (actionData?.status !== 'error') return
+		if (formElement.matches('[aria-invalid="true]')) {
+			formElement.focus()
+		} else {
+			const firstInvalidField = formElement.querySelector(
+				'[aria-invalid="true"]',
+			)
+			if (firstInvalidField instanceof HTMLElement) {
+				firstInvalidField.focus()
+			}
+		}
+	}, [actionData])
+
 	return (
-		<Form
-			id={formId}
-			method="POST"
-			className="flex h-full flex-col gap-y-4 overflow-x-hidden px-10 pb-28 pt-12"
-			noValidate={isHydrated}
-		>
-			<div className="flex flex-col gap-1">
-				<div>
-					<Label>Title</Label>
-					<Input
-						name="title"
-						defaultValue={data.note.title}
-						maxLength={titleMaxLength}
-						required
-					/>
-					<div className="min-h-[32px] px-4 pb-3 pt-1">
-						<ErrorList errors={fieldErrors?.title} />
+		<div className="absolute inset-0">
+			<Form
+				id={formId}
+				ref={formRef}
+				noValidate={isHydrated}
+				method="post"
+				className="flex h-full flex-col gap-y-4 overflow-y-auto overflow-x-hidden px-10 pb-28 pt-12"
+				aria-invalid={formHasErrors || undefined}
+				aria-describedby={formErrorId}
+				tabIndex={-1}
+			>
+				<div className="flex flex-col gap-1">
+					<div>
+						<Label htmlFor={inputId}>Title</Label>
+						<Input
+							id={inputId}
+							name="title"
+							defaultValue={data.note.title}
+							required
+							maxLength={titleMaxLength}
+							aria-invalid={titleHasErrors || undefined}
+							aria-describedby={titleErrorId}
+							autoFocus
+						/>
+						<div className="min-h-[32px] px-4 pb-3 pt-1">
+							<ErrorList id={titleErrorId} errors={fieldErrors?.title} />
+						</div>
+					</div>
+					<div>
+						<Label htmlFor="note-content">Content</Label>
+						<Textarea
+							id="note-content"
+							name="content"
+							defaultValue={data.note.content}
+							required
+							maxLength={contentMaxLength}
+							aria-invalid={contentHasErrors || undefined}
+							aria-describedby={contentErrorId}
+						/>
+						<div className="min-h-[32px] px-4 pb-3 pt-1">
+							<ErrorList id={contentErrorId} errors={fieldErrors?.content} />
+						</div>
 					</div>
 				</div>
-				<div>
-					<Label>Content</Label>
-					<Textarea
-						name="content"
-						defaultValue={data.note.content}
-						maxLength={contentMaxLength}
-						required
-					/>
-					<div className="min-h-[32px] px-4 pb-3 pt-1">
-						<ErrorList errors={fieldErrors?.content} />
-					</div>
-				</div>
-			</div>
+				<ErrorList id={formErrorId} errors={formErrors} />
+			</Form>
 			<div className={floatingToolbarClassName}>
-				<Button variant="destructive" type="reset">
+				<Button form={formId} variant="destructive" type="reset">
 					Reset
 				</Button>
-				<Button type="submit" disabled={isPending}>
+				<Button type="submit" disabled={isPending} form={formId}>
 					{isPending ? 'Pending' : 'Submit'}
 				</Button>
 			</div>
-			<ErrorList errors={formErrors} />
-		</Form>
+		</div>
 	)
 }
 
