@@ -15,6 +15,7 @@ import { Button } from '#app/components/ui/button.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { useEffect, useId, useRef, useState } from 'react'
+import { useFocusInvalid } from '#app/hooks/useFocusInvalid.tsx'
 
 type ActionErrors = {
 	formErrors: Array<string>
@@ -157,21 +158,7 @@ export default function NoteEdit() {
 	const contentHasErrors = Boolean(fieldErrors?.content.length)
 	const contentErrorId = contentHasErrors ? 'content-error' : undefined
 
-	useEffect(() => {
-		const formElement = formRef.current
-		if (!formElement) return
-		if (actionData?.status !== 'error') return
-		if (formElement.matches('[aria-invalid="true]')) {
-			formElement.focus()
-		} else {
-			const firstInvalidField = formElement.querySelector(
-				'[aria-invalid="true"]',
-			)
-			if (firstInvalidField instanceof HTMLElement) {
-				firstInvalidField.focus()
-			}
-		}
-	}, [actionData])
+	useFocusInvalid(formRef.current, actionData?.status === 'error')
 
 	return (
 		<div className="absolute inset-0">
