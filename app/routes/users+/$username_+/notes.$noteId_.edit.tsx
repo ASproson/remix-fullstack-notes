@@ -14,10 +14,9 @@ import { Textarea } from '#app/components/ui/textarea.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { useEffect, useId, useRef, useState } from 'react'
-import { useFocusInvalid } from '#app/hooks/useFocusInvalid.tsx'
 import { z } from 'zod'
-import { parse } from '@conform-to/zod'
+import { getFieldsetConstraint, parse } from '@conform-to/zod'
+import { useForm, conform } from '@conform-to/react'
 
 export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
@@ -82,96 +81,62 @@ function ErrorList({
 	) : null
 }
 
-/**
- * @returns a boolean. On render server returns false because useEffect doesn't run. When JS loads this triggers the re-render and hydrates the page
- */
-function useHydrated() {
-	const [hydrated, setHydrated] = useState(false)
-	useEffect(() => setHydrated(true), [])
-	return hydrated
-}
-
 export default function NoteEdit() {
 	const data = useLoaderData<typeof loader>()
+	const actionData = useActionData<typeof action>()
 	const { formMethod } = useNavigation()
 	const formAction = useFormAction()
-	const actionData = useActionData<typeof action>()
-	const formId = 'note-editor'
 	const isPending = formAction === formAction && formMethod === 'POST'
 
-	const formRef = useRef<HTMLFormElement>(null)
-
-	const inputId = `title-${useId()}`
-
-	const fieldErrors =
-		actionData?.status === 'error' ? actionData.submission.error : null
-
-	const formErrors =
-		actionData?.status === 'error' ? actionData.submission.error[''] : null
-
-	const isHydrated = useHydrated()
-
-	const formHasErrors = Boolean(formErrors?.length)
-	const formErrorId = formHasErrors ? 'form-error' : undefined
-	const titleHasErrors = Boolean(fieldErrors?.title?.length)
-	const titleErrorId = titleHasErrors ? 'title-error' : undefined
-	const contentHasErrors = Boolean(fieldErrors?.content?.length)
-	const contentErrorId = contentHasErrors ? 'content-error' : undefined
-
-	useFocusInvalid(formRef.current, actionData?.status === 'error')
+	const [form, fields] = useForm({
+		id: 'note-editor',
+		constraint: getFieldsetConstraint(NoteEditorSchema),
+		lastSubmission: actionData?.submission,
+		onValidate({ formData }) {
+			return parse(formData, { schema: NoteEditorSchema })
+		},
+		defaultValue: {
+			title: data.note.title,
+			content: data.note.content,
+		},
+	})
 
 	return (
 		<div className="absolute inset-0">
 			<Form
-				id={formId}
-				ref={formRef}
-				noValidate={isHydrated}
 				method="post"
 				className="flex h-full flex-col gap-y-4 overflow-y-auto overflow-x-hidden px-10 pb-28 pt-12"
-				aria-invalid={formHasErrors || undefined}
-				aria-describedby={formErrorId}
-				tabIndex={-1}
+				{...form.props}
 			>
 				<div className="flex flex-col gap-1">
 					<div>
-						<Label htmlFor={inputId}>Title</Label>
-						<Input
-							id={inputId}
-							name="title"
-							defaultValue={data.note.title}
-							required
-							maxLength={titleMaxLength}
-							aria-invalid={titleHasErrors || undefined}
-							aria-describedby={titleErrorId}
-							autoFocus
-						/>
+						<Label htmlFor={fields.title.id}>Title</Label>
+						<Input autoFocus {...conform.input(fields.title)} />
 						<div className="min-h-[32px] px-4 pb-3 pt-1">
-							<ErrorList id={titleErrorId} errors={fieldErrors?.title} />
+							<ErrorList
+								id={fields.title.errorId}
+								errors={fields.title.errors}
+							/>
 						</div>
 					</div>
 					<div>
-						<Label htmlFor="note-content">Content</Label>
-						<Textarea
-							id="note-content"
-							name="content"
-							defaultValue={data.note.content}
-							required
-							maxLength={contentMaxLength}
-							aria-invalid={contentHasErrors || undefined}
-							aria-describedby={contentErrorId}
-						/>
+						<Label htmlFor={fields.content.id}>Content</Label>
+						<Textarea {...conform.textarea(fields.content)} />
 						<div className="min-h-[32px] px-4 pb-3 pt-1">
-							<ErrorList id={contentErrorId} errors={fieldErrors?.content} />
+							<ErrorList
+								id={fields.content.errorId}
+								errors={fields.content.errors}
+							/>
 						</div>
 					</div>
 				</div>
-				<ErrorList id={formErrorId} errors={formErrors} />
+				<ErrorList id={form.id} errors={form.errors} />
 			</Form>
 			<div className={floatingToolbarClassName}>
-				<Button form={formId} variant="destructive" type="reset">
+				<Button form={form.id} variant="destructive" type="reset">
 					Reset
 				</Button>
-				<Button type="submit" disabled={isPending} form={formId}>
+				<Button type="submit" disabled={isPending} form={form.id}>
 					{isPending ? 'Pending' : 'Submit'}
 				</Button>
 			</div>
