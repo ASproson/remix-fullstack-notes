@@ -1,3 +1,8 @@
+/**
+ * Don't worry too much about this file. It's just an in-memory "database"
+ * for the purposes of our workshop. The data modeling workshop will cover
+ * the proper database.
+ */
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
