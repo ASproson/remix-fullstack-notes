@@ -1,14 +1,13 @@
-import { json, type DataFunctionArgs, redirect } from '@remix-run/node'
-import { Form, Link, MetaFunction, useLoaderData } from '@remix-run/react'
-import { db } from '#app/utils/db.server.ts'
-import { invariantResponse } from '#app/utils/misc.tsx'
+import { json, redirect, type DataFunctionArgs } from '@remix-run/node'
+import { Form, Link, useLoaderData, type MetaFunction } from '@remix-run/react'
+import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import { db } from '#app/utils/db.server.ts'
+import { invariantResponse } from '#app/utils/misc.tsx'
 import { type loader as notesLoader } from './notes.tsx'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 
-export const loader = async ({ params }: DataFunctionArgs) => {
-	console.log(params)
+export async function loader({ params }: DataFunctionArgs) {
 	const note = db.note.findFirst({
 		where: {
 			id: {
@@ -16,30 +15,29 @@ export const loader = async ({ params }: DataFunctionArgs) => {
 			},
 		},
 	})
-
-	invariantResponse(note, 'Note not found in database', { status: 404 })
+	if (!note) {
+		throw new Response('Note not found', { status: 404 })
+	}
 
 	return json({
-		note: { title: note.title, content: note.content },
+		note: {
+			title: note.title,
+			content: note.content,
+			images: note.images.map(i => ({ id: i.id, altText: i.altText })),
+		},
 	})
 }
 
-export async function action({ params, request }: DataFunctionArgs) {
-	const noteId = params.noteId
+export async function action({ request, params }: DataFunctionArgs) {
+	invariantResponse(params.noteId, 'noteId param is required')
+
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 
-	switch (intent) {
-		case 'delete': {
-			db.note.delete({
-				where: { id: { equals: noteId } },
-			})
-			return redirect(`/users/${params.username}/notes`)
-		}
-		default: {
-			throw new Response(`Invalid intent: ${intent}`, { status: 400 })
-		}
-	}
+	invariantResponse(intent === 'delete', 'Invalid intent')
+
+	db.note.delete({ where: { id: { equals: params.noteId } } })
+	return redirect(`/users/${params.username}/notes`)
 }
 
 export default function NoteRoute() {
@@ -49,12 +47,25 @@ export default function NoteRoute() {
 		<div className="absolute inset-0 flex flex-col px-10">
 			<h2 className="mb-2 pt-12 text-h2 lg:mb-6">{data.note.title}</h2>
 			<div className="overflow-y-auto pb-24">
+				<ul className="flex flex-wrap gap-5 py-5">
+					{data.note.images.map(image => (
+						<li key={image.id}>
+							<a href={`/resources/images/${image.id}`}>
+								<img
+									src={`/resources/images/${image.id}`}
+									alt={image.altText ?? ''}
+									className="h-32 w-32 rounded-lg object-cover"
+								/>
+							</a>
+						</li>
+					))}
+				</ul>
 				<p className="whitespace-break-spaces text-sm md:text-lg">
 					{data.note.content}
 				</p>
 			</div>
 			<div className={floatingToolbarClassName}>
-				<Form method="POST">
+				<Form method="post">
 					<Button
 						type="submit"
 						variant="destructive"
@@ -86,7 +97,7 @@ export const meta: MetaFunction<
 			? data?.note.content.slice(0, 97) + '...'
 			: 'No content'
 	return [
-		{ title: `${noteTitle} | ${displayName}'s Notes | Epic Notes` },
+		{ title: `${noteTitle} | ${displayName}'s Notes | Fullstack Notes` },
 		{
 			name: 'description',
 			content: noteContentsSummary,
@@ -94,12 +105,12 @@ export const meta: MetaFunction<
 	]
 }
 
-export const ErrorBoundary = () => {
+export function ErrorBoundary() {
 	return (
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: ({ params }) => (
-					<p>Note with note ID {params.noteId} not found!</p>
+					<p>No note with the id "{params.noteId}" exists</p>
 				),
 			}}
 		/>
